@@ -1,0 +1,11 @@
+{
+  "name": "finance-desk",
+  "owner": { "name": "finance-desk maintainers" },
+  "plugins": [
+    {
+      "name": "finance-desk",
+      "source": "./finance-desk",
+      "description": "Live market checks, stock checkups, valuation estimates, portfolio review, trade planning and option math. Read-only, no third-party dependencies."
+    }
+  ]
+}

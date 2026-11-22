@@ -1,0 +1,7 @@
+symbol,shares,cost_basis,target_weight
+AAPL,40,190.00,20
+MSFT,25,410.00,20
+NVDA,120,95.00,15
+GOOGL,50,160.00,15
+VTI,60,280.00,25
+CASH,5000,,5

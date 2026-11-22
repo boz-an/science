@@ -1,0 +1,7 @@
+{
+  "name": "finance-desk",
+  "description": "Live market checks, stock checkups, DCF fair-value estimates, portfolio risk review, trade sizing and odds, and option math. Stdlib-only Python engine on public data (Yahoo chart API, SEC EDGAR, FRED). Read-only: it never places orders.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "keywords": ["finance", "investing", "stocks", "valuation", "dcf", "portfolio", "risk", "options", "market-data"]
+}
