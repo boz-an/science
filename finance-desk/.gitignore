@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+holdings.csv
+*.local.csv
