@@ -214,6 +214,14 @@ class TestFundamentals(unittest.TestCase):
         self.assertEqual(end, "2024-06-30")
         self.assertIn("TTM", method)
 
+    def test_concept_switch_uses_latest(self):
+        f = self.facts()
+        f["facts"]["us-gaap"]["RevenueFromContractWithCustomerExcludingAssessedTax"] = {"units": {"USD": [
+            fact("2020-01-01", "2020-12-31", 5.0, "10-K", "2021-02-01")]}}
+        val, end, _ = fundamentals.ttm(f, fundamentals.REVENUE)
+        self.assertEqual(end, "2024-06-30")
+        self.assertAlmostEqual(val, 135.0)
+
     def test_annual_and_cagr(self):
         s = fundamentals.annual_series(self.facts(), ["Revenues"])
         self.assertEqual(list(s.values()), [100.0, 120.0])

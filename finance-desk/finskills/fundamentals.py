@@ -64,32 +64,42 @@ def annual_series(facts, concepts, unit="USD"):
 
 
 def ttm(facts, concepts, unit="USD"):
-    """Trailing twelve months for a flow item. Returns (value, period_end, method) or None."""
+    """Trailing twelve months for a flow item. Returns (value, period_end, method) or None.
+
+    Companies switch XBRL concepts over time (e.g. Revenues ->
+    RevenueFromContractWithCustomer...), so every candidate concept is
+    evaluated and the most recent period wins; list order breaks ties.
+    """
+    best = None
     for concept in concepts:
-        rows = [r for r in _rows(facts, concept, unit) if r.get("start")]
-        if not rows:
-            continue
-        annual = [r for r in rows if r["form"].startswith("10-K") and 340 <= (_d(r["end"]) - _d(r["start"])).days <= 380]
-        if not annual:
-            continue
-        fy = max(_dedupe_latest_filed(annual, lambda r: r["end"]).values(), key=lambda r: r["end"])
-        fy_end = _d(fy["end"])
-        ytd = [r for r in rows if _d(r["end"]) > fy_end and abs((_d(r["start"]) - fy_end).days - 1) <= 5]
-        if not ytd:
-            return float(fy["val"]), fy["end"], "fiscal year (%s)" % concept
-        cur = max(_dedupe_latest_filed(ytd, lambda r: r["end"]).values(), key=lambda r: r["end"])
-        cur_end, cur_len = _d(cur["end"]), (_d(cur["end"]) - _d(cur["start"])).days
-        prior = [
-            r for r in rows
-            if abs((_d(r["end"]) - (cur_end - dt.timedelta(days=364))).days) <= 8
-            and abs((_d(r["end"]) - _d(r["start"])).days - cur_len) <= 8
-        ]
-        if not prior:
-            return float(fy["val"]), fy["end"], "fiscal year (%s; prior-year YTD missing)" % concept
-        pr = max(prior, key=lambda r: r.get("filed", ""))
-        value = float(fy["val"]) + float(cur["val"]) - float(pr["val"])
-        return value, cur["end"], "TTM = FY + YTD - prior YTD (%s)" % concept
-    return None
+        r = _ttm_one(facts, concept, unit)
+        if r and (best is None or r[1] > best[1]):
+            best = r
+    return best
+
+
+def _ttm_one(facts, concept, unit):
+    rows = [r for r in _rows(facts, concept, unit) if r.get("start")]
+    annual = [r for r in rows if r["form"].startswith("10-K") and 340 <= (_d(r["end"]) - _d(r["start"])).days <= 380]
+    if not annual:
+        return None
+    fy = max(_dedupe_latest_filed(annual, lambda r: r["end"]).values(), key=lambda r: r["end"])
+    fy_end = _d(fy["end"])
+    ytd = [r for r in rows if _d(r["end"]) > fy_end and abs((_d(r["start"]) - fy_end).days - 1) <= 5]
+    if not ytd:
+        return float(fy["val"]), fy["end"], "fiscal year (%s)" % concept
+    cur = max(_dedupe_latest_filed(ytd, lambda r: r["end"]).values(), key=lambda r: r["end"])
+    cur_end, cur_len = _d(cur["end"]), (_d(cur["end"]) - _d(cur["start"])).days
+    prior = [
+        r for r in rows
+        if abs((_d(r["end"]) - (cur_end - dt.timedelta(days=364))).days) <= 8
+        and abs((_d(r["end"]) - _d(r["start"])).days - cur_len) <= 8
+    ]
+    if not prior:
+        return float(fy["val"]), fy["end"], "fiscal year (%s; prior-year YTD missing)" % concept
+    pr = max(prior, key=lambda r: r.get("filed", ""))
+    value = float(fy["val"]) + float(cur["val"]) - float(pr["val"])
+    return value, cur["end"], "TTM = FY + YTD - prior YTD (%s)" % concept
 
 
 def latest_instant(facts, concepts, unit="USD"):
